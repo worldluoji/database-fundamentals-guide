@@ -1,0 +1,37 @@
+Mysql是一种RDBMS(关系型)数据库， 由于其是开源的（oracle太贵），市场上的占有率也在不断提高。
+
+1. 开启事务处理的主要两种方式：
+	1）begin 开始一个事务， rollback 回滚事务 ， commit提交事务
+	2）SET AOTOCOMMIT=1开启事务自动提交
+补充Mysql事务的4个特性：
+原子性:一个事务中的所有操作，要么全部完成，要么全部不完成。
+一致性:事务开始和结束后，数据库完整性没有破坏。
+隔离性:多个事务并发，数据不会因为并发而不一致。
+持久性:事务结束后，对数据的修改是持久的。
+
+2. char和varchar的区别
+char是固定长度，char中的n最大长度是255个字符, 如果是utf8编码方式， 那么char类型占255 * 3个字节，存储时字符数没有达到定义的位数，会后面补齐空格入库; varchar是变长的（0-65535字节），没有达到定义的位数，也不会补齐。 
+所以char速度更快，但是会浪费空间。
+
+3. 存储过程
+先编译，再执行。实际就是把sql语句编译后存储在数据库中，这样用户通过指定存储过程名字并给定参数即可执行。明显，存储过程有更快的速度，同时也符合组件化编程的思想。
+使用方法详见create_procedure.sql. 
+注意：1）Mysql以";"为分隔符，如果没有声明分隔符，则编译器会将存储过程当作SQL语句处理，编译会报错，所以之前delimiter ;;，结束后再还原回delimiter ; 2）如果有入参，就SET &p_in=1, CALL 存储过程名（@p_in）
+
+4. 查看版本，字符集等
+show variables like '%version%';
+show variables like 'character_set%';
+
+5. Mysql允许用关键字作为表名（最好不要）。例如admin作为表明时，查询这张表要select * from `admin`;比较反人类
+
+6. 连接Mysql: mysql -u 用户名 -p -h Mysql服务器所在主机。下面就会让输入密码。
+
+7. 什么是STRAIGHT_JOING? STRAIGHT_JOIN is similar to JOIN, except that the left table is always read before the right table. This can be used for those (few) cases for which the join optimizer puts the tables in the wrong order.
+例子：select * from t1 straight_join t2 on (t1.a=t2.a);则t1时驱动表，t2是被驱动表，如果直接用inner join则编译器不一定按照这个顺序。
+注意：
+STRAIGHT_JOIN只适用于inner join，并不使用与left join，right join。（因为left join，right join已经代表指定了表的执行顺序）
+尽可能让优化器去判断，因为大部分情况下mysql优化器是比人要聪明的。使用STRAIGHT_JOIN一定要慎重，因为啊部分情况下认为指定的执行顺序并不一定会比优化引擎要靠谱。
+
+8. explain SQL语句 \G来分析一条SQL语句。 不加\G就是表格形式，加了就是列表形式。
+
+

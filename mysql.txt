@@ -34,4 +34,5 @@ STRAIGHT_JOIN只适用于inner join，并不使用与left join，right join。�
 
 8. explain SQL语句 \G来分析一条SQL语句。 不加\G就是表格形式，加了就是列表形式。
 
-
+9. Mysql中如果设置了主键值达到了上限，再insert语句是就会报主键冲突的错误，因此建议尽量将主键类型设置为8 个字节的 bigint unsigned（2^64-1）防止那么快达到上限.
+如果没有设置primary key，那么mysql会自动生成一个自增的看不到的rowId, 其也是bitint unsigned，但是只用了6个字节。 达到上限后就会覆盖原来的行，循环。

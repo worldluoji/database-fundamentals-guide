@@ -10,6 +10,6 @@ select city,name,age from t where city='杭州' order by name limit 1000;
 解决方法：
 加入（city,name）联合索引 
 alter table t add index city_user(city, name);
-
+这样，where city='杭州'后查询出的数据就是天然按name排序的，就不再需要sort buffer了，直接从主键索引id中取到city,name,age到1000行即可
  
 

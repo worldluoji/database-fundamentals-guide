@@ -52,20 +52,103 @@ InnoDB count(*)性能优化：1）. 可以单独一张表存放总数，增加�
  2）. 应该尽量使用count(*), Mysql Innodb做了优化，速度count(*)约等于count(1)>count(id)>count(字段) 3）. 根据业务场景优化，比如统计A+B+C三次查询记录的
  总数，可以再查询记录把数量一起返回给前端，前端再加起来。
 
-12 Mysql查看，修改隔离界别： select @@transaction_isolation; 默认值时可重复读。
+12. Mysql查看，修改隔离界别： select @@transaction_isolation; 默认值时可重复读。
 set session transaction isolation level （level取值如下）
 1）read uncommitted : 读取尚未提交的数据 ：哪个问题都不能解决
 2）read committed：读取已经提交的数据 ：可以解决脏读 ---- oracle默认的
 3）repeatable read：重读读取：可以解决脏读 和 不可重复读 ---mysql默认的
 4）serializable：串行化：可以解决 脏读 不可重复读 和 幻读---相当于锁表
 
-13 脏读：session A 看到了session B提交的数据(X->Y)，结果 B roll back了， A看到的Y就是脏数据。
-   不可重复读：session A 看到session B提交事务（X->Y）前后的值不一样。
-   幻读：同一个事务前后两次查询同一张表， 前后两次查询中间有插入操作，后一次查询出现了前一次查询没有的行。
-   见幻读产生例子.png中的Q3
+13. 脏读：session A 看到了session B提交的数据(X->Y)，结果 B roll back了， A看到的Y就是脏数据。
+    不可重复读：session A 看到session B提交事务（X->Y）前后的值不一样。
+    幻读：同一个事务前后两次查询同一张表， 前后两次查询中间有插入操作，后一次查询出现了前一次查询没有的行。
+    见幻读产生例子.png中的Q3，这里要说明一下，在可默认可重复读级别下，普通查询时快照读，时看不到别的事务下的新增的记录，只有在当前读（for
+    update，读取到已经提交的记录的最新值）的情况下，才会出现幻读.
+   CREATE TABLE `t` (
+  `id` int(11) NOT NULL,
+  `c` int(11) DEFAULT NULL,
+  `d` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `c` (`c`)
+  ) ENGINE=InnoDB;
+insert into t values(0,0,0),(5,5,5),
+(10,10,10),(15,15,15),(20,20,20),(25,25,25);
 
 
 14.begin;
    select * from t where d=5 for update;
    commit;
  select for update会加一个写锁， 写锁在commit提交事务后释放。
+
+
+15.理解索引
+1）为什么使用索引
+使用索引其实就是为了加速查询，就像书的目录一样，能够快速定位到我们想要的内容。
+2）什么是聚簇索引、非聚簇索引和回表？
+create table T(
+id int not null primary key auto_increment, 
+k int not null, 
+name varchar(16),
+index (k))engine=InnoDB;
+id是主键，默认有主键索引，主键索引是“聚簇”的，就是说select * from T where id=5, 直接遍历主键id的索引树，就能把id,k,name都查询出来，就像id把k,name都聚集在一起了一样
+k是普通索引，普通索引是非聚簇的，就是说select * from T where k=5那么会遍历k的索引树，找到k=5对应的id集合，再通过id索引树搜索一次找到name等其它信息，这个过程称为回表（或回行）
+3）什么是页分裂，为什么说要尽量使用自增主键？
+继续上面的例子，假设ID没有设置auto_increment且ID不连续,ids=(300,500,800)在一个数据页。这时候插入一个ID为600的数据，如果该数据页未满，需要把800的数据往后移，再插入600的数据；如果该也数据已满，根据B+树算法，就会发生页分裂，800会被移动到新申请的数据页上。显然，页分裂会严重影响性能和空间利用率。其逆过程就是页合并。
+设置了auto_increment之后，每次id都是自增1，就不会出现上述需要挪动位置的情况，不会触发叶子节点的分裂，因为每次插入一条数据都是追加操作。
+另外，如果主键长度越小，普通索引的叶子节点就越小，普通索引占用的空间也越小。
+当然也有适合其它业务字段做主键的情形，那就是典型的KV场景，即只有主键上有索引（且该索引是唯一索引）的情况。
+4）为什么要重建普通索引？
+alter table T drop index k;
+alter table T add index(k);
+因为重建普通索引可以节省空间。前面说过索引可能因为删除和页分裂等原因导致数据空洞。重建索引时会将数据按顺序插入，这样页的利用率高，数据更加紧凑。
+反之如果是主键索引，重建就不合理，因为下面两个语句都会导致数据表的重建。替代语句是alter table T engine=InnoDB.
+alter table T drop primary key;
+alter table T add primary key(id);
+5) 什么是索引覆盖？
+select ID from T where k=5
+由于ID已经在索引树上了，这句查询就不需要回表。这就是索引覆盖。
+索引覆盖例子:
+CREATE TABLE `tuser` (
+  `id` int(11) NOT NULL,
+  `id_card` varchar(32) DEFAULT NULL,
+  `name` varchar(32) DEFAULT NULL,
+  `age` int(11) DEFAULT NULL,
+  `ismale` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_card_name` (`id_card`，`name`),
+  KEY `name_age` (`name`,`age`)
+) ENGINE=InnoDB
+select name from tuser where id_card='xxxxxxxxxx'
+根据身份证号查询姓名时，联合索引就让我们使用上了索引覆盖，通过id_card的索引树就能直接拿到name,不需要回表了
+6）什么是索引的最左前缀原则？
+实际是利用了B+树的最左前缀原则。上面的name_age联合索引，在select * from tuser where name='xxx'也能使用到索引。 但是select * from tuser where age=28就使用不到了。这就是做前缀原则。
+所以通过建立name_age联合索引，就不用再为name单独建立索引了，可以少维护一个索引。
+select name from tuser where name like '张%' and age=10这样也能利用到索引，找到名字“张”起头，age=10的记录
+7）什么是索引下推？
+select * from tuser where name like '张 %' and age=10 and ismale=1;
+还是只有name_age联合索引，在Mysql5.6及以后，引入了索引下推。这句查询语句会先匹配name以张开头的且age=10的记录，再回表找id，并且找到ismale=1的记录；
+5.6之前没有索引下推，在找到name以张开头的就会回表去查询，这样明显age != 
+8）下面的联合索引有必要吗？
+CREATE TABLE `geek` (
+  `a` int(11) NOT NULL,
+  `b` int(11) NOT NULL,
+  `c` int(11) NOT NULL,
+  `d` int(11) NOT NULL,
+  PRIMARY KEY (`a`,`b`),
+  KEY `c` (`c`),
+  KEY `ca` (`c`,`a`),
+  KEY `cb` (`c`,`b`)
+) ENGINE=InnoDB;
+业务中有查询语句
+select * from geek where c=N order by a limit 1;
+select * from geek where c=N order by b limit 1;
+答：cb联合索引有必要，但是ca联合索引没有必要。
+对于
+select ... from geek where c=N order by a 
+走ca,cb索引都能定位到满足c=N主键
+而且主键的聚簇索引本身就是按order by a,b排序，无需重新排序。所以ca可以去掉
+select ... from geek where c=N order by b 
+这条sql如果只有c单个字段的索引，定位记录可以走索引，但是order by b的顺序与主键顺序不一致，需要额外排序
+cb索引可以把排序优化调
+
+

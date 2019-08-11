@@ -151,4 +151,42 @@ select ... from geek where c=N order by b
 这条sql如果只有c单个字段的索引，定位记录可以走索引，但是order by b的顺序与主键顺序不一致，需要额外排序
 cb索引可以把排序优化调
 
+9）分页优化
+select * from ORDER_DMEO order by order_no limit 10000, 20; 速度慢
+select * from ORDER_DMEO where id> (select id from ORDER_DMEO order by order_no limit 10000, 1) limit 20; 速度快
+默认在order_no上加入了索引
+第一个语句要扫描所有记录行，按照order_no排序，还要回表取出其它所有信息，再取出其中20行；
+第二个语句先用要给子查询查出起始的那条记录，由于子查询里只查了ID，不需要回表，速度很快；外部查询就只需要查询20条记录了。
+可以查看order_demo.sql，里面插入了12000行记录
+通过explain分析：
+explain select * from ORDER_DMEO order by order_no limit 10000, 20 \G;
+           id: 1
+  select_type: SIMPLE
+        table: ORDER_DMEO
+   partitions: NULL
+         type: ALL
+possible_keys: NULL
+          key: NULL
+      key_len: NULL
+          ref: NULL
+         rows: 12222
+     filtered: 100.00
+        Extra: Using filesort
+可以看到第一条语句使用到了filesort，即因为扫描行数太多（1222行），无法直接通过sort_buffer排序，所以用到了磁盘，用到了磁盘效率太多。
 
+第二条语句，子查询用到了索引，而且只扫描了10001行
+ explain select id from ORDER_DMEO order by order_no limit 10000, 1 \G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: ORDER_DMEO
+   partitions: NULL
+         type: index
+possible_keys: NULL
+          key: order_no_index
+      key_len: 147
+          ref: NULL
+         rows: 10001
+     filtered: 100.00
+        Extra: Using index
+ 最后外部查询只订单需要扫描20行即可。

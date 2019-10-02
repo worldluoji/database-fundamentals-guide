@@ -39,3 +39,55 @@ select min(stu_num),class from student group by class having class > 'classA'
 当group by 与聚合函数配合使用时，功能为分组后计算
 当group by 与having配合使用时，功能为分组后过滤
 当group by 与聚合函数，同时非聚合字段同时使用时，非聚合字段的取值是第一个匹配到的字段内容，即id小的条目对应的字段内容。
+
+实战：
+1.leetcode586 订单最多的用户：
+在表 orders 中找到订单数最多客户对应的 customer_number 。
+
+数据保证订单数最多的顾客恰好只有一位。
+
+表 orders 定义如下：
+
+| Column            | Type      |
+|-------------------|-----------|
+| order_number (PK) | int       |
+| customer_number   | int       |
+| order_date        | date      |
+| required_date     | date      |
+| shipped_date      | date      |
+| status            | char(15)  |
+| comment           | char(200) |
+实际上就是看那个customer_number的记录数目最多。
+解答：
+select customer_number from (
+select customer_number,count(*) as counts from orders group by customer_number order by counts desc
+) as temp limit 0,1
+Mysql中产生的新的表必须用as写别名，否则会报错：
+Every derived table must have its own alias
+
+2.leetcode597
+select IFNULL( CONVERT(
+(select count(*) from 
+(select requester_id,accepter_id from request_accepted group by requester_id,accepter_id) as tmp2)
+    /
+(select count(*) from 
+(select sender_id,send_to_id from friend_request group by sender_id,send_to_id) as tmp1),DECIMAL(10,2))
+,0.00) as accept_rate
+
+IFNULL() 函数用于判断第一个表达式是否为 NULL，如果为 NULL 则返回第二个参数的值，如果不为 NULL 则返回第一个参数的值。
+保留小数位：
+ --这个是保留整数位
+ SELECT CONVERT(4545.1366,DECIMAL);
+ --这个是保留两位小数    
+SELECT CONVERT(4545.1366,DECIMAL(10,2));
+ --这个是截取两位，并不会四舍五入保留两位小数
+SELECT TRUNCATE(4545.1366,2);
+
+实际使用distinct速度更快
+select IFNULL( CONVERT(
+(select count(*) from 
+(select distinct requester_id,accepter_id from request_accepted) as tmp2)
+    /
+(select count(*) from 
+(select distinct sender_id,send_to_id from friend_request) as tmp1),DECIMAL(10,2))
+,0.00) as accept_rate

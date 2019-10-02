@@ -32,16 +32,16 @@ show variables like 'character_set%';
 STRAIGHT_JOIN只适用于inner join，并不使用与left join，right join。（因为left join，right join已经代表指定了表的执行顺序）
 尽可能让优化器去判断，因为大部分情况下mysql优化器是比人要聪明的。使用STRAIGHT_JOIN一定要慎重，因为啊部分情况下认为指定的执行顺序并不一定会比优化引擎要靠谱。
 
-8. explain SQL语句 \G来分析一条SQL语句。 不加\G就是表格形式，加了就是列表形式。
+8. explain SQL语句 \G来分析一条SQL语句。 不加\G就是表格形，加了就是列表形式。
 
 9. Mysql中如果设置了主键值达到了上限，再insert语句是就会报主键冲突的错误，因此建议尽量将主键类型设置为8 个字节的 bigint unsigned（2^64-1）防止那么快达到上限.
 如果没有设置primary key，那么mysql会自动生成一个自增的看不到的rowId, 其也是bitint unsigned，但是只用了6个字节。 达到上限后就会覆盖原来的行，循环。
 
 10. update流程还涉及redo log和bin log两个重要的日志模块。 
-其中，redo log是innodb特有的。 
+其中，redo log是innodb特有的，而redo log在Service层，MyIAsam和InnoDb都有。
 redo log大小是固定的，从头写到尾又到头，是一个圈；bin log则是追加写，不会覆盖原来的。 
 redo log相当于一个“粉板”， 在执行更新操作的时候，先写到redo log里，等到空闲的时候再写到磁盘；bin log用来恢复数据，可以恢复记录的任意一秒的数据。
-为什么用bin log恢复数据？因为前面已经说了，redo log是innnodb用来优化性能和保证crash-safe的，而且会循环写覆盖，而bin log是追加写的。
+为什么用bin log恢复数据？因为前面已经说了，redo log是innnodb用来优化性能和保证crash-safe（即数据库异常重启，之前的提交也不会丢失），而且会循环写覆盖，而bin log是追加写的。
 Mysql innodb在update时，会先记录redo log， 再记录bin log,最后提交事务，是一个典型的两阶段提交。
 innodb_flush_log_at_trx_commit设置为，表示redo log持久化到磁盘， 这样即使MySql异常重启后数据也不会丢失；sync_binlog 这个参数设置成 1 表示每次
 事务的bin log都写到磁盘，则异常重启后bin log不会丢失。
@@ -127,7 +127,7 @@ select name from tuser where name like '张%' and age=10这样也能利用到索
 7）什么是索引下推？
 select * from tuser where name like '张 %' and age=10 and ismale=1;
 还是只有name_age联合索引，在Mysql5.6及以后，引入了索引下推。这句查询语句会先匹配name以张开头的且age=10的记录，再回表找id，并且找到ismale=1的记录；
-5.6之前没有索引下推，在找到name以张开头的就会回表去查询，这样明显age != 
+5.6之前没有索引下推，在找到name以张开头的就会回表去查询，这样明显age != 10的也被回表查出来了。
 8）下面的联合索引有必要吗？
 CREATE TABLE `geek` (
   `a` int(11) NOT NULL,
@@ -190,3 +190,5 @@ possible_keys: NULL
      filtered: 100.00
         Extra: Using index
  最后外部查询只订单需要扫描20行即可。
+
+ 16. Mysql的MVVC控制，会在事务启动的时候，申请一个全局的transactionId。事务启动后，每一行的改动都会有一个版本，与transactionId挂钩，且版本号递增。

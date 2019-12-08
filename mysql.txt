@@ -27,7 +27,7 @@ show variables like 'character_set%';
 6. 连接Mysql: mysql -u 用户名 -p -h Mysql服务器所在主机。下面就会让输入密码。
 
 7. 什么是STRAIGHT_JOING? STRAIGHT_JOIN is similar to JOIN, except that the left table is always read before the right table. This can be used for those (few) cases for which the join optimizer puts the tables in the wrong order.
-例子：select * from t1 straight_join t2 on (t1.a=t2.a);则t1时驱动表，t2是被驱动表，如果直接用inner join则编译器不一定按照这个顺序。
+例子：select * from t1 straight_join t2 on (t1.a=t2.a);则t1是驱动表，t2是被驱动表，如果直接用inner join则编译器不一定按照这个顺序。
 注意：
 STRAIGHT_JOIN只适用于inner join，并不使用与left join，right join。（因为left join，right join已经代表指定了表的执行顺序）
 尽可能让优化器去判断，因为大部分情况下mysql优化器是比人要聪明的。使用STRAIGHT_JOIN一定要慎重，因为啊部分情况下认为指定的执行顺序并不一定会比优化引擎要靠谱。
@@ -38,6 +38,7 @@ STRAIGHT_JOIN只适用于inner join，并不使用与left join，right join。�
 如果没有设置primary key，那么mysql会自动生成一个自增的看不到的rowId, 其也是bitint unsigned，但是只用了6个字节。 达到上限后就会覆盖原来的行，循环。
 
 10. update流程还涉及redo log和bin log两个重要的日志模块。 
+MySql里说的WAL(Write-Ahead Logging)，关键点就是先写日志再写磁盘，对应的就是redo log.
 其中，redo log是innodb特有的，而redo log在Service层，MyIAsam和InnoDb都有。
 redo log大小是固定的，从头写到尾又到头，是一个圈；bin log则是追加写，不会覆盖原来的。 
 redo log相当于一个“粉板”， 在执行更新操作的时候，先写到redo log里，等到空闲的时候再写到磁盘；bin log用来恢复数据，可以恢复记录的任意一秒的数据。
@@ -93,7 +94,7 @@ index (k))engine=InnoDB;
 id是主键，默认有主键索引，主键索引是“聚簇”的，就是说select * from T where id=5, 直接遍历主键id的索引树，就能把id,k,name都查询出来，就像id把k,name都聚集在一起了一样
 k是普通索引，普通索引是非聚簇的，就是说select * from T where k=5那么会遍历k的索引树，找到k=5对应的id集合，再通过id索引树搜索一次找到name等其它信息，这个过程称为回表（或回行）
 3）什么是页分裂，为什么说要尽量使用自增主键？
-继续上面的例子，假设ID没有设置auto_increment且ID不连续,ids=(300,500,800)在一个数据页。这时候插入一个ID为600的数据，如果该数据页未满，需要把800的数据往后移，再插入600的数据；如果该也数据已满，根据B+树算法，就会发生页分裂，800会被移动到新申请的数据页上。显然，页分裂会严重影响性能和空间利用率。其逆过程就是页合并。
+继续上面的例子，假设ID没有设置auto_increment且ID不连续,ids=(300,500,800)在一个数据页。这时候插入一个ID为600的数据，如果该数据页未满，需要把800的数据往后移，再插入600的数据；如果该数据已满，根据B+树算法，就会发生页分裂，800会被移动到新申请的数据页上。显然，页分裂会严重影响性能和空间利用率。其逆过程就是页合并。
 设置了auto_increment之后，每次id都是自增1，就不会出现上述需要挪动位置的情况，不会触发叶子节点的分裂，因为每次插入一条数据都是追加操作。
 另外，如果主键长度越小，普通索引的叶子节点就越小，普通索引占用的空间也越小。
 当然也有适合其它业务字段做主键的情形，那就是典型的KV场景，即只有主键上有索引（且该索引是唯一索引）的情况。
@@ -192,3 +193,17 @@ possible_keys: NULL
  最后外部查询只订单需要扫描20行即可。
 
  16. Mysql的MVVC控制，会在事务启动的时候，申请一个全局的transactionId。事务启动后，每一行的改动都会有一个版本，与transactionId挂钩，且版本号递增。
+ 
+ 17. 普通索引和唯一索引区别
+ 1). 唯一索引要求字段不能重复，普通索引则没有这个限制。
+ 2). 查询区别：
+ select id from T where k=5. 普通索引，查找到下一个不满足k=5的才完成查询；
+ 唯一索引：因为是唯一的，查到到k=5的后就退出
+ 可以看到对于查询来说，普通索引查询会多一次判断，但性能影响不大。
+ 3). 更新。对于更新来说，当更新一个数据页时，普通索引会使用change buffer。
+ 即当这个数据页在内存中时就直接修改，否则先写到change buffer中（写的是操作），这样就暂时不用先操作磁盘了。
+ 这样下次读取数据时，再执行change buffer中的这个操作，这样就保证了数据的一致性。
+ 如果加了唯一索引，每次更新数据时就会校验唯一性，就会将数据从磁盘读取到内存，所以change buffer就使用不上了。
+ 可见change buffer可以提升“写多读少”时候的性能。如果读多写少，由于加了change buffer, 性能反而可能下降。
+ 
+ 18. 尽量不要用业务字段作为主键，但有一种情况例外，即典型的K-V场景。

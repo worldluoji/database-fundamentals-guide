@@ -1,4 +1,4 @@
-Mysql是一种RDBMS(关系型)数据库， 由于其是开源的（oracle太贵），市场上的占有率也在不断提高。
+﻿Mysql是一种RDBMS(关系型)数据库， 由于其是开源的（oracle太贵），市场上的占有率也在不断提高。
 
 1. 开启事务处理的主要两种方式：
 	1）begin 开始一个事务， rollback 回滚事务 ， commit提交事务
@@ -48,16 +48,16 @@ innodb_flush_log_at_trx_commit设置为，表示redo log持久化到磁盘， �
 事务的bin log都写到磁盘，则异常重启后bin log不会丢失。
 bin log是逻辑日志，redo log是物理日志。逻辑日志可以给别的数据库，别的引擎使用，已经大家都讲得通这个“逻辑”；物理日志就只有“我”自己能用，别人没有共享我的“物理格式”
 
-11. MyISAM把一张表的记录总数记到了磁盘上，所以count(*) 查询时直接读取总数的记录就OK了，有点是速度快，但是MyISAM不支持事务的。 而InnoDB则是一条一条记录取数，目的是为了保证多版本控制（MVVC）时数据的正确性。
+11. MyISAM把一张表的记录总数记到了磁盘上，所以count(*) 查询时直接读取总数的记录就OK了，优点点是速度快，但是MyISAM不支持事务的。 而InnoDB则是一条一条记录取数，目的是为了保证多版本控制（MVVC）时数据的正确性。
 InnoDB count(*)性能优化：1）. 可以单独一张表存放总数，增加时+1，删除时-1；如果使用redis等内存数据库，可能会统计不准确，要求不高时可以使用。
  2）. 应该尽量使用count(*), Mysql Innodb做了优化，速度count(*)约等于count(1)>count(id)>count(字段) 3）. 根据业务场景优化，比如统计A+B+C三次查询记录的
  总数，可以再查询记录把数量一起返回给前端，前端再加起来。
 
 12. Mysql查看，修改隔离界别： select @@transaction_isolation; 默认值时可重复读。
 set session transaction isolation level （level取值如下）
-1）read uncommitted : 读取尚未提交的数据 ：哪个问题都不能解决
-2）read committed：读取已经提交的数据 ：可以解决脏读 ---- oracle默认的
-3）repeatable read：重读读取：可以解决脏读 和 不可重复读 ---mysql默认的
+1）read uncommitted : 能读取到尚未提交事务的数据 ：哪个问题都不能解决
+2）read committed：能读取已经提交事务的数据 ：可以解决脏读 ---- oracle默认的
+3）repeatable read：可重复读：可以解决脏读 和 不可重复读 ---mysql默认的，即与事务启动时看到的一致。
 4）serializable：串行化：可以解决 脏读 不可重复读 和 幻读---相当于锁表
 
 13. 脏读：session A 看到了session B提交的数据(X->Y)，结果 B roll back了， A看到的Y就是脏数据。
@@ -157,7 +157,7 @@ select * from ORDER_DMEO order by order_no limit 10000, 20; 速度慢
 select * from ORDER_DMEO where id> (select id from ORDER_DMEO order by order_no limit 10000, 1) limit 20; 速度快
 默认在order_no上加入了索引
 第一个语句要扫描所有记录行，按照order_no排序，还要回表取出其它所有信息，再取出其中20行；
-第二个语句先用要给子查询查出起始的那条记录，由于子查询里只查了ID，不需要回表，速度很快；外部查询就只需要查询20条记录了。
+第二个语句先用子查询查出起始的那条记录，由于子查询里只查了ID，不需要回表，速度很快；外部查询就只需要查询20条记录了。
 可以查看order_demo.sql，里面插入了12000行记录
 通过explain分析：
 explain select * from ORDER_DMEO order by order_no limit 10000, 20 \G;
@@ -173,7 +173,7 @@ possible_keys: NULL
          rows: 12222
      filtered: 100.00
         Extra: Using filesort
-可以看到第一条语句使用到了filesort，即因为扫描行数太多（1222行），无法直接通过sort_buffer排序，所以用到了磁盘，用到了磁盘效率太多。
+可以看到第一条语句使用到了filesort，即因为扫描行数太多（1222行），无法直接通过sort_buffer排序，所以用到了磁盘，用到了磁盘效率就大大降低了。
 
 第二条语句，子查询用到了索引，而且只扫描了10001行
  explain select id from ORDER_DMEO order by order_no limit 10000, 1 \G
@@ -190,7 +190,7 @@ possible_keys: NULL
          rows: 10001
      filtered: 100.00
         Extra: Using index
- 最后外部查询只订单需要扫描20行即可。
+ 最后外部查询只需要扫描20行即可。
 
  16. Mysql的MVVC控制，会在事务启动的时候，申请一个全局的transactionId。事务启动后，每一行的改动都会有一个版本，与transactionId挂钩，且版本号递增。
  
@@ -207,3 +207,7 @@ possible_keys: NULL
  可见change buffer可以提升“写多读少”时候的性能。如果读多写少，由于加了change buffer, 性能反而可能下降。
  
  18. 尽量不要用业务字段作为主键，但有一种情况例外，即典型的K-V场景。
+
+ 19. MySQL 中 sum 函数没统计到任何记录时，会返回 null 而不是 0，可以使用 IFNULL 函数把 null 转换为 0；
+ MySQL 中 count 字段不统计 null 值，COUNT(*) 才是统计所有记录数量的正确方式。
+ MySQL 中 =NULL 并不是判断条件而是赋值，对 NULL 进行判断只能使用 IS NULL 或者 IS NOT NULL。

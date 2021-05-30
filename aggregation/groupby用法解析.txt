@@ -1,4 +1,4 @@
-CREATE TABLE `student` (
+﻿CREATE TABLE `student` (
   `ID` int(11) NOT NULL auto_increment,
   `STU_NUM` int(11) DEFAULT NULL,
   `GRADE` VARCHAR(30),
@@ -91,3 +91,8 @@ select IFNULL( CONVERT(
 (select count(*) from 
 (select distinct sender_id,send_to_id from friend_request) as tmp1),DECIMAL(10,2))
 ,0.00) as accept_rate
+
+练习：
+leetcode 511 
+select player_id, min(event_date) as first_login
+from Activity group by player_id

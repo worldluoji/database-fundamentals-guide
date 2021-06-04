@@ -4,3 +4,9 @@ from Employee e
 group by e.employee_id
 
 注意掌握if的用法
+
+
+类似的题目还有 leetcode1873题
+select e.employee_id,
+if(mod(e.employee_id,2) = 0, 0, if(LEFT(e.name,1)='M',0,e.salary)) as bonus
+from Employees e

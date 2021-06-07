@@ -1,0 +1,9 @@
+select c.Name from Candidate c left join (
+select CandidateId,count(*) as CNT from Vote group by CandidateId order by CNT desc limit 1
+) t on c.id=t.CandidateId
+where t.CandidateId is not NULL
+
+总结: 1. group by后面可以接order by和limit
+
+2. select id,CandidateId,count(*) as CNT from Vote group by CandidateId
+如果group by后只接了CandidateId一个参数，而CandidateId对应多个不同的id, 那么分组后只会取第一个id

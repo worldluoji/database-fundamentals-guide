@@ -2,4 +2,9 @@
 docker pull mysql:5.7
 
 2. 启动MySql
-docker run -d -p 3306:3306 -e MYSQL_DATABASE="test" -e MYSQL_USER="luoji" -e MYSQL_PASSWORD="199114" -e MYSQL_ROOT_PASSWORD="199114"  --name=mysqlNew2  mysql:5.7 
+docker run -d -p 3309:3306 -e MYSQL_DATABASE="test" -e MYSQL_USER="luoji" -e MYSQL_PASSWORD="199114" -e MYSQL_ROOT_PASSWORD="199114"  --name=mysqlNew2  mysql:5.7 
+
+3. mysql -uroot -h服务器地址 -P3309 -p 
+即可连接，需要先安装mysql-client:
+wget -i -c http://dev.mysql.com/get/mysql57-community-release-el7-10.noarch.rp
+yum -y install mysql57-community-release-el7-10.noarch.rpm

@@ -196,10 +196,10 @@ cb索引可以把排序优化调
 
 9）分页优化
 select * from ORDER_DMEO order by order_no limit 10000, 20; 速度慢
-select * from ORDER_DMEO where id> (select id from ORDER_DMEO order by order_no limit 10000, 1) limit 20; 速度快
+select * from ORDER_DMEO where order_no > (select order_no from ORDER_DMEO order by order_no limit 10000, 1) limit 20; 速度快
 默认在order_no上加入了索引
 第一个语句要扫描所有记录行，按照order_no排序，还要回表取出其它所有信息，再取出其中20行；
-第二个语句先用子查询查出起始的那条记录，由于子查询里只查了ID，不需要回表，速度很快；外部查询就只需要查询20条记录了。
+第二个语句先用子查询查出起始的那条记录，由于子查询里只查了order_no ，不需要回表，速度很快；外部查询就只需要查询20条记录了。
 可以查看order_demo.sql，里面插入了12000行记录
 通过explain分析：
 explain select * from ORDER_DMEO order by order_no limit 10000, 20 \G;
@@ -218,9 +218,9 @@ possible_keys: NULL
 可以看到第一条语句使用到了filesort，即因为扫描行数太多（1222行），无法直接通过sort_buffer排序，所以用到了磁盘，用到了磁盘效率就大大降低了。
 
 第二条语句，子查询用到了索引，而且只扫描了10001行
- explain select id from ORDER_DMEO order by order_no limit 10000, 1 \G
+ explain select order_no from ORDER_DMEO order by order_no limit 10000, 1 \G
 *************************** 1. row ***************************
-           id: 1
+           order_no : 1
   select_type: SIMPLE
         table: ORDER_DMEO
    partitions: NULL

@@ -12,7 +12,7 @@
 | 5  | 4.00  |
 | 6  | 3.65  |
 +----+-------+
-例如，根据上述给定的?Scores 表，你的查询应该返回（按分数从高到低排列）：
+例如，根据上述给定的Scores 表，你的查询应该返回（按分数从高到低排列）：
 
 +-------+------+
 | Score | Rank |
@@ -20,7 +20,7 @@
 | 4.00  | 1    |
 | 4.00  | 1    |
 | 3.85  | 2    |
-|?3.65  | 3    |
+| 3.65  | 3    |
 | 3.65  | 3    |
 | 3.50  | 4    |
 +-------+------+
@@ -29,3 +29,34 @@ SELECT
 Score,
 dense_rank() over (order by Score desc)  as 'Rank'
 from Scores;
+
+dense_rank()从8.0开始才支持
+
+5.7可以这样rank()
+select (@rownum:=@rownum + 1) AS Rank,Score  
+from 
+(SELECT  @rownum:=0, Score from test_score order by Score desc) t;
+
+那么dense_rank()怎么办呢？
+select t2.Rank,t2.Score from (
+select if(@pre=Score, @curr, @curr:=@curr+1) as Rank,Score, @pre:=Score as tmp  
+from 
+(SELECT  @pre:=NULL, @curr:=0, Score from test_score order by Score desc) t ) t2;
+
+
+本地实验用表：
+create table `test_score` (
+    id int(11) primary key auto_increment,
+    Score decimal(10,2) NOT NULL
+)Engine=INNODB;
+insert into test_score(score) values(3)
+......
+
+DECIMAL从MySQL 5.1引入，列的声明语法是DECIMAL(M,D)。NUMERIC与DECIMAL同义，
+如果字段类型定义为NUMERIC，则将自动转成DECIMAL。
+
+对于声明语法DECIMAL(M,D)，自变量的值范围如下：
+M是最大位数（精度），范围是1到65。可不指定，默认值是10。
+D是小数点右边的位数（小数位）。范围是0到30，并且不能大于M，可不指定，默认值是0。
+
+

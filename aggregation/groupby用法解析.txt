@@ -96,3 +96,18 @@ select IFNULL( CONVERT(
 leetcode 511 
 select player_id, min(event_date) as first_login
 from Activity group by player_id
+
+leetcode 1327
+select p.product_name,o.unit 
+from Products p 
+left join 
+(select t.product_id,t.order_date, sum(t.unit) as unit from Orders t where Year(t.order_date) = 2020 and Month(t.order_date) = 2 group by t.product_id ) o
+on p.product_id=o.product_id
+where o.unit >= 100
+注意： 1）. where要在gorup by之前
+ 2）日期的处理
+如果你要查询2013年1月份加入的产品呢？
+代码如下：
+select * from product where date(add_time) between '2013-01-01' and '2013-01-31'
+你还可以这样写：
+select * from product where Year(add_time) = 2013 and Month(add_time) = 1     

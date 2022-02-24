@@ -11,7 +11,7 @@
 |    6 | Mark |         2 |
 +------+------+-----------+
 
-找出referee_id|部位2的所有name
+找出referee_id不为2的所有name
 
 select name from customer where referee_id != 2 or referee_id is NULL
 

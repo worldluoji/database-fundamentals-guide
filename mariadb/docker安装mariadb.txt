@@ -1,0 +1,35 @@
+Docker安装MariaDB
+
+1 docker search mariadb 搜索mariadb镜像（非必须）
+
+2 docker pull mariadb:10.5 下载docker镜像, 可指定版本号
+
+3 docker images 查看本地已有的所有镜像
+
+4 mkdir -p $HOME/data/mariadb/data 建一个目录作为和容器的映射目录
+
+5 sudo docker run --name mariadb -p 3306:3306 -e MYSQL_ROOT_PASSWORD=199114 -d  -v $HOME/data/mariadb/data:/var/lib/mysql  mariadb:10.5
+
+　　--name启动容器设置容器名称为mariadb
+
+　　-p设置容器的3306端口映射到主机3306端口
+
+　　-e MYSQL_ROOT_PASSWORD设置环境变量数据库root用户密码为输入数据库root用户的密码
+
+　　-v设置容器目录/var/lib/mysql映射到本地目录$HOME/data/mariadb/data
+
+　　-d后台运行容器mariadb并返回容器id
+
+6 docker ps -a 查看容器是否运行
+
+7 docker container update --restart=always 容器id   修改容器为自启动
+
+8 进入容器docker exec -it 容器Id  /bin/bash
+
+9 在容器内登录数据库 mysql -uroot -proot密码
+
+其它常用命令：
+创建并给iam赋权iam库的权限, '%'表示任意地址可以连接
+grant all on iam.* TO iam@'%' identified by 'iam59!z$';
+查看用户权限
+SELECT * FROM mysql.user;

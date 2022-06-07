@@ -6,4 +6,4 @@ CREATE TABLE `t` (
   `addr` varchar(128) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `city` (`city`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

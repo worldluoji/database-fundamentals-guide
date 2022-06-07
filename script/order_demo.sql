@@ -3,7 +3,7 @@ create table ORDER_DMEO (
 	order_no varchar(36),
 	receiver varchar(24),
 	sender varchar(24)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 alter table ORDER_DMEO add index order_no_index(order_no)
 
 drop procedure idata;

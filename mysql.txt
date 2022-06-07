@@ -330,3 +330,19 @@ ALTER TABLE student ADD age INT(4);
 
 23. 导出全部数据库
 mysqldump -uroot -p --all-databases > sqlfile.sql
+
+24. 关于外键约束
+在Mysql数据库中，有时会用到外键约束FOREIGN KEY。这些外键约束也可以使用触发器TRIGGER来实现。当然，外键约束和触发器都是不提倡使用的。
+因为外键约束和触发器容易给数据库服务器增加额外的负担，造成性能下降。甚至可能造成频发的锁等待或者死锁。
+
+25. MySQL FIND_IN_SET
+FIND_IN_SET内置函数，允许您在逗号分隔的字符串列表中查找指定字符串的位置。
+例子：
+mysql> SELECT FIND_IN_SET('y','x,y,z');
++--------------------------+
+| FIND_IN_SET('y','x,y,z') |
++--------------------------+
+|                        2 |
++--------------------------+
+1 row in set
+如没有查询到则返回0

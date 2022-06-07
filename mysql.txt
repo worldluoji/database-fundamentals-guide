@@ -327,3 +327,6 @@ commit;
 22. 其它常用语句
 增加一个age字段，类型是INT(4)
 ALTER TABLE student ADD age INT(4); 
+
+23. 导出全部数据库
+mysqldump -uroot -p --all-databases > sqlfile.sql

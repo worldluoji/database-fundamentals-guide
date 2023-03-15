@@ -112,7 +112,7 @@ InnoDB count(*)性能优化：
 2）应该尽量使用count(*), Mysql Innodb做了优化，速度count(*)约等于count(1)>count(id)>count(字段) 3）. 
 3）根据业务场景优化，比如统计A+B+C三次查询记录的总数，可以在查询记录时把数量一起返回给前端，前端再加起来。
 
-12. Mysql查看，修改隔离界别： select @@transaction_isolation; 默认值时可重复读。
+12. Mysql查看，修改隔离界别： select @@transaction_isolation; 默认值时可重复读。(Mariadb是 select @@session.tx_isolation;)
 set session transaction isolation level （level取值如下）
 1）read uncommitted : 能读取到尚未提交事务的数据 ：哪个问题都不能解决
 2）read committed：能读取已经提交事务的数据 ：可以解决脏读 ---- oracle默认的
@@ -229,8 +229,12 @@ select ... from geek where c=N order by b
 cb索引可以把排序优化调
 
 9）分页优化
+LIMIT 2 5 : 在原始结果集中，跳过 2 个记录行，并从 第 3 个记录行开始，最多返回 5 个记录行。
+LIMIT 5 最多返回 5 个记录行，等效于 LIMIT 0 5
+```
 select * from ORDER_DMEO order by order_no limit 10000, 20; 速度慢
 select * from ORDER_DMEO where order_no > (select order_no from ORDER_DMEO order by order_no limit 10000, 1) limit 20; 速度快
+```
 默认在order_no上加入了索引
 第一个语句要扫描所有记录行，按照order_no排序，还要回表取出其它所有信息，再取出其中20行；
 第二个语句先用子查询查出起始的那条记录，由于子查询里只查了order_no ，不需要回表，速度很快；外部查询就只需要查询20条记录了。

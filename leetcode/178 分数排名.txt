@@ -1,6 +1,6 @@
-±àÐ´Ò»¸ö SQL ²éÑ¯À´ÊµÏÖ·ÖÊýÅÅÃû¡£
+ç¼–å†™ä¸€ä¸ª SQL æŸ¥è¯¢æ¥å®žçŽ°åˆ†æ•°æŽ’åã€‚
 
-Èç¹ûÁ½¸ö·ÖÊýÏàÍ¬£¬ÔòÁ½¸ö·ÖÊýÅÅÃû£¨Rank£©ÏàÍ¬¡£Çë×¢Òâ£¬Æ½·ÖºóµÄÏÂÒ»¸öÃû´ÎÓ¦¸ÃÊÇÏÂÒ»¸öÁ¬ÐøµÄÕûÊýÖµ¡£»»¾ä»°Ëµ£¬Ãû´ÎÖ®¼ä²»Ó¦¸ÃÓÐ¡°¼ä¸ô¡±¡£
+å¦‚æžœä¸¤ä¸ªåˆ†æ•°ç›¸åŒï¼Œåˆ™ä¸¤ä¸ªåˆ†æ•°æŽ’åï¼ˆRankï¼‰ç›¸åŒã€‚è¯·æ³¨æ„ï¼Œå¹³åˆ†åŽçš„ä¸‹ä¸€ä¸ªåæ¬¡åº”è¯¥æ˜¯ä¸‹ä¸€ä¸ªè¿žç»­çš„æ•´æ•°å€¼ã€‚æ¢å¥è¯è¯´ï¼Œåæ¬¡ä¹‹é—´ä¸åº”è¯¥æœ‰â€œé—´éš”â€ã€‚
 
 +----+-------+
 | Id | Score |
@@ -12,7 +12,7 @@
 | 5  | 4.00  |
 | 6  | 3.65  |
 +----+-------+
-ÀýÈç£¬¸ù¾ÝÉÏÊö¸ø¶¨µÄScores ±í£¬ÄãµÄ²éÑ¯Ó¦¸Ã·µ»Ø£¨°´·ÖÊý´Ó¸ßµ½µÍÅÅÁÐ£©£º
+ä¾‹å¦‚ï¼Œæ ¹æ®ä¸Šè¿°ç»™å®šçš„Scores è¡¨ï¼Œä½ çš„æŸ¥è¯¢åº”è¯¥è¿”å›žï¼ˆæŒ‰åˆ†æ•°ä»Žé«˜åˆ°ä½ŽæŽ’åˆ—ï¼‰ï¼š
 
 +-------+------+
 | Score | Rank |
@@ -30,21 +30,21 @@ Score,
 dense_rank() over (order by Score desc)  as 'Rank'
 from Scores;
 
-dense_rank()´Ó8.0¿ªÊ¼²ÅÖ§³Ö
+dense_rank()ä»Ž8.0å¼€å§‹æ‰æ”¯æŒ
 
-5.7¿ÉÒÔÕâÑùrank()
+5.7å¯ä»¥è¿™æ ·rank()
 select (@rownum:=@rownum + 1) AS Rank,Score  
 from 
 (SELECT  @rownum:=0, Score from test_score order by Score desc) t;
 
-ÄÇÃ´dense_rank()ÔõÃ´°ìÄØ£¿
+é‚£ä¹ˆdense_rank()æ€Žä¹ˆåŠžå‘¢ï¼Ÿ
 select t2.Rank,t2.Score from (
 select if(@pre=Score, @curr, @curr:=@curr+1) as Rank,Score, @pre:=Score as tmp  
 from 
 (SELECT  @pre:=NULL, @curr:=0, Score from test_score order by Score desc) t ) t2;
 
 
-±¾µØÊµÑéÓÃ±í£º
+æœ¬åœ°å®žéªŒç”¨è¡¨ï¼š
 create table `test_score` (
     id int(11) primary key auto_increment,
     Score decimal(10,2) NOT NULL
@@ -52,11 +52,11 @@ create table `test_score` (
 insert into test_score(score) values(3)
 ......
 
-DECIMAL´ÓMySQL 5.1ÒýÈë£¬ÁÐµÄÉùÃ÷Óï·¨ÊÇDECIMAL(M,D)¡£NUMERICÓëDECIMALÍ¬Òå£¬
-Èç¹û×Ö¶ÎÀàÐÍ¶¨ÒåÎªNUMERIC£¬Ôò½«×Ô¶¯×ª³ÉDECIMAL¡£
+DECIMALä»ŽMySQL 5.1å¼•å…¥ï¼Œåˆ—çš„å£°æ˜Žè¯­æ³•æ˜¯DECIMAL(M,D)ã€‚NUMERICä¸ŽDECIMALåŒä¹‰ï¼Œ
+å¦‚æžœå­—æ®µç±»åž‹å®šä¹‰ä¸ºNUMERICï¼Œåˆ™å°†è‡ªåŠ¨è½¬æˆDECIMALã€‚
 
-¶ÔÓÚÉùÃ÷Óï·¨DECIMAL(M,D)£¬×Ô±äÁ¿µÄÖµ·¶Î§ÈçÏÂ£º
-MÊÇ×î´óÎ»Êý£¨¾«¶È£©£¬·¶Î§ÊÇ1µ½65¡£¿É²»Ö¸¶¨£¬Ä¬ÈÏÖµÊÇ10¡£
-DÊÇÐ¡ÊýµãÓÒ±ßµÄÎ»Êý£¨Ð¡ÊýÎ»£©¡£·¶Î§ÊÇ0µ½30£¬²¢ÇÒ²»ÄÜ´óÓÚM£¬¿É²»Ö¸¶¨£¬Ä¬ÈÏÖµÊÇ0¡£
+å¯¹äºŽå£°æ˜Žè¯­æ³•DECIMAL(M,D)ï¼Œè‡ªå˜é‡çš„å€¼èŒƒå›´å¦‚ä¸‹ï¼š
+Mæ˜¯æœ€å¤§ä½æ•°ï¼ˆç²¾åº¦ï¼‰ï¼ŒèŒƒå›´æ˜¯1åˆ°65ã€‚å¯ä¸æŒ‡å®šï¼Œé»˜è®¤å€¼æ˜¯10ã€‚
+Dæ˜¯å°æ•°ç‚¹å³è¾¹çš„ä½æ•°ï¼ˆå°æ•°ä½ï¼‰ã€‚èŒƒå›´æ˜¯0åˆ°30ï¼Œå¹¶ä¸”ä¸èƒ½å¤§äºŽMï¼Œå¯ä¸æŒ‡å®šï¼Œé»˜è®¤å€¼æ˜¯0ã€‚
 
 

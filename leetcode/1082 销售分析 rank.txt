@@ -8,17 +8,17 @@ group by seller_id
 ) t
 ) t2 where t2.my_rank=1
 
-rankµÄÓÃ·¨£º
-Àý1£º
+rankçš„ç”¨æ³•ï¼š
+ä¾‹1ï¼š
 RANK() OVER (
     PARTITION BY <expression>[{,<expression>...}]
     ORDER BY <expression> [ASC|DESC], [{,<expression>...}]
 ) 
-ÔÚÕâ¸öÓï·¨ÖÐ£º
+åœ¨è¿™ä¸ªè¯­æ³•ä¸­ï¼š
 
-Ê×ÏÈ£¬PARTITION BY×Ó¾ä½«½á¹û¼¯»®·ÖÎª·ÖÇø¡£RANK()¹¦ÄÜÔÚ·ÖÇøÄÚÖ´ÐÐ£¬²¢ÔÚ¿çÔ½·ÖÇø±ß½çÊ±ÖØÐÂ³õÊ¼»¯¡£
-Æä´Î£¬ORDER BY×Ó¾ä°´Ò»¸ö»ò¶à¸öÁÐ»ò±í´ïÊ½¶Ô·ÖÇøÄÚµÄÐÐ½øÐÐÅÅÐò¡£
-Àý×Ó£º
+é¦–å…ˆï¼ŒPARTITION BYå­å¥å°†ç»“æžœé›†åˆ’åˆ†ä¸ºåˆ†åŒºã€‚RANK()åŠŸèƒ½åœ¨åˆ†åŒºå†…æ‰§è¡Œï¼Œå¹¶åœ¨è·¨è¶Šåˆ†åŒºè¾¹ç•Œæ—¶é‡æ–°åˆå§‹åŒ–ã€‚
+å…¶æ¬¡ï¼ŒORDER BYå­å¥æŒ‰ä¸€ä¸ªæˆ–å¤šä¸ªåˆ—æˆ–è¡¨è¾¾å¼å¯¹åˆ†åŒºå†…çš„è¡Œè¿›è¡ŒæŽ’åºã€‚
+ä¾‹å­ï¼š
 SELECT
     val,
     RANK() OVER (
@@ -26,7 +26,7 @@ SELECT
     ) my_rank
 FROM
     rankDemo; 
-ÕâÊÇÊä³ö£º
+è¿™æ˜¯è¾“å‡ºï¼š
 
 +------+---------+
 | val  | my_rank |
@@ -41,10 +41,10 @@ FROM
 +------+---------+
 7 rows in set (0.02 sec)
 
-Àý2£º
-ÈÃÎÒÃÇÊ¹ÓÃsalesÎÒÃÇÔÚ´°¿Úº¯Êý½Ì³ÌÖÐ´´½¨µÄ±í½øÐÐÑÝÊ¾¡£
+ä¾‹2ï¼š
+è®©æˆ‘ä»¬ä½¿ç”¨salesæˆ‘ä»¬åœ¨çª—å£å‡½æ•°æ•™ç¨‹ä¸­åˆ›å»ºçš„è¡¨è¿›è¡Œæ¼”ç¤ºã€‚
 
-ÒÔÏÂÊÇsales±í£º
+ä»¥ä¸‹æ˜¯salesè¡¨ï¼š
 
 +----------------+-------------+--------+
 | sales_employee | fiscal_year | sale   |
@@ -60,7 +60,7 @@ FROM
 | John           |        2018 | 250.00 |
 +----------------+-------------+--------+
 9 rows in set (0.01 sec)
-ÒÔÏÂÉùÃ÷Ê¹ÓÃRANK()¹¦ÄÜ°´ÏúÊÛ¶î°´Ã¿ÄêµÄÏúÊÛ¶îÅÅÃû£º
+ä»¥ä¸‹å£°æ˜Žä½¿ç”¨RANK()åŠŸèƒ½æŒ‰é”€å”®é¢æŒ‰æ¯å¹´çš„é”€å”®é¢æŽ’åï¼š
 
 SELECT
 	sales_employee,
@@ -72,7 +72,7 @@ SELECT
 	) sales_rank 
 FROM
 	sales; 
-Êä³ö½á¹û£º
+è¾“å‡ºç»“æžœï¼š
 
 +----------------+-------------+--------+------------+
 | sales_employee | fiscal_year | sale   | sales_rank |
@@ -89,5 +89,5 @@ FROM
 +----------------+-------------+--------+------------+
 9 rows in set (0.01 sec)
 
-Ê×ÏÈ£¬PARTITION BY×Ó¾ä°´²ÆÎñÄê¶È½«½á¹û¼¯·Ö³É¶à¸ö·ÖÇø¡£
-È»ºó£¬ORDER BY×Ó¾ä°´ÏúÊÛ¶î°´½µÐò¶ÔÏúÊÛÔ±¹¤½øÐÐÅÅÐò¡£
+é¦–å…ˆï¼ŒPARTITION BYå­å¥æŒ‰è´¢åŠ¡å¹´åº¦å°†ç»“æžœé›†åˆ†æˆå¤šä¸ªåˆ†åŒºã€‚
+ç„¶åŽï¼ŒORDER BYå­å¥æŒ‰é”€å”®é¢æŒ‰é™åºå¯¹é”€å”®å‘˜å·¥è¿›è¡ŒæŽ’åºã€‚

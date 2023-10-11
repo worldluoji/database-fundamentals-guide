@@ -149,7 +149,7 @@ where o.unit >= 100
 
 如果你要查询2013年1月份加入的产品呢？代码如下:
 ```
-select * from product where date(add_time) between '2013-01-01' and '2013-01-31'
+select * from product where Date(add_time) between '2013-01-01' and '2013-01-31'
 ```
 你还可以这样写：
 ```

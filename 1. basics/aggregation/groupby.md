@@ -94,13 +94,13 @@ select IFNULL( CONVERT(
 (select sender_id,send_to_id from friend_request group by sender_id,send_to_id) as tmp1),DECIMAL(10,2))
 ,0.00) as accept_rate
 ```
-IFNULL() 函数用于判断第一个表达式是否为 NULL，如果为 NULL 则返回第二个参数的值，如果不为 NULL 则返回第一个参数的值。
+IFNULL() 函数用于**判断第一个表达式是否为 NULL，如果为 NULL 则返回第二个参数的值，如果不为 NULL 则返回第一个参数的值**。
 
 保留小数位：
 
 这个是保留整数位
 ```
- SELECT CONVERT(4545.1366,DECIMAL);
+SELECT CONVERT(4545.1366,DECIMAL);
 ```
 
 这个是保留两位小数    
@@ -144,7 +144,7 @@ where o.unit >= 100
 ```
 
 注意： 
-- 1）where要在gorup by之前
+- 1）where要在gorup by之前； **where是先过滤再分组；having是先分组再过滤**
 - 2）日期的处理
 
 如果你要查询2013年1月份加入的产品呢？代码如下:

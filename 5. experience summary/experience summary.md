@@ -115,3 +115,10 @@ mysql> SELECT FIND_IN_SET('y','x,y,z');
 1 row in set
 ```
 如没有查询到则返回0
+
+<br>
+
+17. change password
+```
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'your_new_password';
+```

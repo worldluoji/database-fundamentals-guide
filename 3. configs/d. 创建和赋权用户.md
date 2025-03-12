@@ -36,6 +36,12 @@
 
    对于更细粒度的控制，你可以分别授予不同的权限，如 `INSERT`, `UPDATE`, `DELETE` 等。
 
+   如果你希望用户 newuser 不仅可以从 localhost 访问数据库，还可以从其他主机访问，你需要将 'newuser'@'localhost' 替换为 'newuser'@'%'。% 是通配符，表示允许从任何主机连接。
+   
+   ```sql
+   GRANT ALL PRIVILEGES ON mydatabase.* TO 'newuser'@'%';
+   ```
+
 4. **刷新权限**:
    修改权限后，你需要运行以下命令以确保更改立即生效：
    

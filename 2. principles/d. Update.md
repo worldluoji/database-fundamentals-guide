@@ -1,19 +1,78 @@
 # MySql Update
 
 ## update 语句执行流程
+```
+update users set c = c + 1 where id = 2;
+```
+
 <img src="./pics/update语句执行流程.png" />
 
-update流程涉及redo log和bin log两个重要的日志模块。
+update流程涉及 redo log和 bin log两个重要的日志模块。
 
-MySql里说的WAL(Write-Ahead Logging)，关键点就是先写日志再写磁盘，对应的就是redo log.
-- redo log是innodb特有的，而bin log在Service层，MyIAsam和InnoDb都有。
+---
+
+### WAL 机制（Write-Ahead Logging）​
+- ​核心思想：先写日志（内存操作），再异步刷盘（磁盘操作），以此优化性能。
+​- 核心日志：redo log 是实现 WAL 的关键，所有数据变更会先记录到 redo log 中，再异步持久化到磁盘文件（如 .ibd 文件）。
+```
+事务提交后 -> 数据页留在 Buffer Pool（脏页） -> 后台线程异步刷盘 -> 更新磁盘数据文件
+```
+
+---
+
+### redo log 与 bin log 的对比
+
+| **特性**          | **redo log (InnoDB 特有)**           | **bin log (Server 层)**             |
+|--------------------|--------------------------------------|-------------------------------------|
+| **作用**           | 保证事务的持久性（Crash-Safe）       | 数据归档、主从复制、时间点恢复      |
+| **存储方式**       | 循环写入（固定大小文件组）           | 追加写入（文件持续增长）            |
+| **写入时机**       | 事务执行中实时写入内存（`redo log buffer`） | 事务提交时写入磁盘（`binlog cache`） |
+| **数据粒度**       | 物理日志（记录数据页修改）           | 逻辑日志（记录 SQL 或行变更）       |
+| **事务支持**       | 与事务绑定，支持崩溃恢复             | 依赖存储引擎的事务状态              |
+
+- redo log是 innodb 特有的，而bin log在Service层，MyIAsam和InnoDb都有。
 - redo log大小是固定的，从头写到尾又到头，是一个圈；bin log则是追加写，不会覆盖原来的。 
-- redo log相当于一个“粉板”， 在执行更新操作的时候，先写到redo log（内存）里，等到空闲的时候再写到磁盘；
+- redo log相当于一个“粉板”， 在执行更新操作的时候，先写到 redo log（内存）里，等到空闲的时候再写到磁盘（redo log也是要写入磁盘的）；
 - bin log用来恢复数据，可以恢复记录的任意一秒的数据。
 
-为什么用bin log恢复数据？因为前面已经说了，redo log是innnodb用来优化性能和保证crash-safe（即数据库异常重启，之前的提交也不会丢失），而且会循环写覆盖，而bin log是追加写的。
-Mysql innodb在update时，会先记录redo log， 再记录bin log,最后提交事务，是一个典型的两阶段提交。
+---
 
+### 两阶段提交（2PC）的必要性
+Mysql innodb 在 update时，会先记录 redo log，再记录 bin log, 最后提交事务，是一个典型的两阶段提交。
+- **核心目的**：保证 `redo log` 和 `bin log` 的日志一致性，避免以下问题：
+  - **场景 1**：若先写 bin log 后写 redo log：
+    - bin log 已记录提交，但 redo log 未记录。
+    - 崩溃恢复时，事务会被回滚，导致主从数据不一致。
+  - **场景 2**：若先写 redo log 后写 bin log：
+    - redo log 已提交，但 bin log 未记录。
+    - 主库数据已更新，但从库无法同步，导致数据丢失。
+
+- **恢复逻辑**：
+  - 崩溃后，检查 redo log 的 prepare 记录和 bin log 的完整性：
+    - 若 bin log 完整：提交事务（即使 redo log 未 commit）。
+    - 若 bin log 不完整：回滚事务。
+
+为什么用 bin log 恢复数据？因为前面已经说了，redo log是 innnodb用来优化性能和保证 crash-safe，而且会循环写覆盖，而bin log是追加写的。
+
+Crash-Safe 的核心含义是：即使数据库在运行过程中突然崩溃（如断电、宕机），重启后也能确保：
+- ​已提交的事务数据不丢失；
+- ​未提交的事务数据自动回滚。
+
+​Crash-Safe 的本质：用日志的持久化能力，弥补内存数据丢失的风险。
+
+#### 类比理解
+​例子：记账本（redo log） vs 保险柜（磁盘数据）​
+​
+- 日常操作：你收到一笔钱，先在记账本上记录（redo log 刷盘）。
+随后再将钱存入保险柜（数据页刷盘）。
+- 突发情况：如果还没来得及存钱到保险柜，突然停电（崩溃），此时：
+保险柜里的钱是旧的（磁盘数据未更新）。但记账本已明确记录这笔收入（redo log 已持久化）。
+​- 恢复过程：来电后，你根据记账本的记录，将钱存入保险柜（重放 redo log）。
+​最终结果：保险柜中的钱与记账本一致。
+
+---
+
+## innodb_flush_log_at_trx_commit
 innodb_flush_log_at_trx_commit设置为1，表示redo log持久化到磁盘，这样即使MySql异常重启后数据也不会丢失；
 ```
 mysql> show variables like 'innodb_flush_log_at_trx_commit'
@@ -41,34 +100,34 @@ mysql> show variables like 'sync_binlog';
 <strong>bin log是逻辑日志，redo log是物理日志</strong>。
 逻辑日志可以给别的数据库，别的引擎使用，已经大家都讲得通这个“逻辑”；
 物理日志就只有“我”自己能用，别人没有共享我的“物理格式”
-
+```
 innodb_flush_log_at_trx_commit取值补充：
 
 innodb_flush_log_at_trx_commit = 0
+```
+Innodb中的 Log Thread每隔1 秒钟会将 log buffer中的数据写入到文件，同时还会通知文件系统进行文件同步的 flush操作，保证数据确实已经写入到磁盘上面的物理文件。但是，每次事务的结束（commit 或者是rollback）并不会触发 Log Thread将log buffer 中的数据写入文件。
 
-Innodb 中的Log Thread 每隔1 秒钟会将log buffer中的数据写入到文件，同时还会通知文件系统进行文件同步的flush
-操作，保证数据确实已经写入到磁盘上面的物理文件。但是，每次事务的结束（commit 或者是rollback）并不会触发Log Thread
-将log buffer 中的数据写入文件。所以，当设置为0 的时候，当MySQL Crash 和OS Crash
-或者主机断电之后，最极端的情况是丢失1 秒时间的数据变更。
-
+所以，当设置为0 的时候，当MySQL Crash 和 OS Crash或者主机断电之后，最极端的情况是丢失1 秒时间的数据变更。
+```
 innodb_flush_log_at_trx_commit = 1
+```
 
 这也是Innodb 的默认设置。我们每次事务的结束都会触发Log Thread 将log buffer
 中的数据写入文件并通知文件系统同步文件。**这个设置是最安全的设置，能够保证不论是MySQL Crash 还是OS Crash
 或者是主机断电都不会丢失任何已经提交的数据。**
-
+```
 innodb_flush_log_at_trx_commit = 2
-
+```
 当我们设置为2 的时候，Log Thread
 会在我们每次事务结束的时候将数据写入事务日志，但是这里的写入仅仅是调用了文件系统的文件写入操作。
 而我们的文件系统都是有缓存机制的，所以Log Thread的这个写入并不能保证内容真的已经写入到物理磁盘上面完成持久化的动作。
-文件系统什么时候会将缓存中的这个数据同步到物理磁盘文件Log
-Thread 就完全不知道了。所以，当设置为2 的时候，MySQL Crash 并不会造成数据的丢失，但是OS Crash
-或者是主机断电后可能丢失的数据量就完全控制在文件系统上了。
-各种文件系统对于自己缓存的刷新机制各不一样，大家可以自行参阅相关的手册。
 
-根据上面三种参数值的说明，0的时候，如果mysql crash可能会丢失数据，可靠性不高。
-我们着重测试1和2两种情况。1的时候会影响数据库写入性能，相对2而言写入速度会慢，这只能根据实际情况来决定吧。
+文件系统什么时候会将缓存中的这个数据同步到物理磁盘文件 Log Thread 就完全不知道了。
+所以，当设置为2 的时候，MySQL Crash 并不会造成数据的丢失，但是OS Crash
+或者是主机断电后可能丢失的数据量就完全控制在文件系统上了。各种文件系统对于自己缓存的刷新机制各不一样，大家可以自行参阅相关的手册。
+
+根据上面三种参数值的说明，0的时候，如果 mysql crash可能会丢失数据，可靠性不高。
+我们着重测试1和2两种情况。1的时候会影响数据库写入性能，相对2而言写入速度会慢，这只能根据实际情况来决定。
 
 ---
 

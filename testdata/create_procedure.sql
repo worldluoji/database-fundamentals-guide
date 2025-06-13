@@ -4,7 +4,7 @@ CREATE TABLE `t2` (
   `b` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `a` (`a`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4  COMMENT='测试表t2';
 
 drop procedure idata;
 delimiter ;;

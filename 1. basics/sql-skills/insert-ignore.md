@@ -5,7 +5,7 @@ CREATE TABLE users (
     id INT PRIMARY KEY COMMENT '用户ID',
     name VARCHAR(50) COMMENT '用户名',
     email VARCHAR(100) COMMENT '邮箱'
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8  COMMENT='用户信息表';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4  COMMENT='用户信息表';
 
 -- 插入测试数据
 INSERT INTO users VALUES 

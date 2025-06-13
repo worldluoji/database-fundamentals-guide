@@ -7,7 +7,7 @@ docker pull mysql:5.7
 
 ## 2. 启动MySql
 ```
-docker run -d -p 3309:3306 -e MYSQL_DATABASE="test" -e MYSQL_USER="luoji" -e MYSQL_PASSWORD="199114" -e MYSQL_ROOT_PASSWORD="199114"  --name=mysqlNew2  mysql:5.7 
+docker run -d -p 3309:3306 -e MYSQL_DATABASE="test" -e MYSQL_USER="luoji" -e MYSQL_PASSWORD="<your_password>" -e MYSQL_ROOT_PASSWORD="<your_root_password>"  --name=mysqlNew2  mysql:5.7 
 ```
 
 ## 3. 连接MySql
@@ -24,10 +24,3 @@ mysql -uroot -p
 mysql -uroot -h服务器地址 -P3309 -p
 ```
 连接
-
-
-如果是mariadb, 使用
-```
-docker search mariadb 
-```
-搜索mariadb镜像, 将上面镜像替换为mariadb的镜像即可。

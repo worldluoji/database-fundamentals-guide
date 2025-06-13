@@ -39,6 +39,7 @@ CREATE TABLE orders (
 ALTER TABLE orders 
   CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
+CHARACTER前可以不加DEFAULT关键字，效果是一样的。
 
 #### 4. 列级别（特殊需求）  
 ```sql
@@ -63,6 +64,11 @@ CREATE TABLE users (
 > - `_cs`：区分大小写  
 > - `_bin`：二进制比较  
 > - `_ai`：不区分口音
+
+​一个字符集对应多个校对规则，如未显式指定，自动使用该字符集的默认校对规则。可通过如下sql查看
+```sql
+SHOW COLLATION WHERE Charset = 'utf8mb4';
+```
 
 ---
 

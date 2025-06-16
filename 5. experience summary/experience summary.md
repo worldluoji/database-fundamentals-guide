@@ -112,29 +112,7 @@ mysqldump -uroot -p --all-databases > sqlfile.sql
 
 ---
 
-16.  MySQL FIND_IN_SET
-FIND_IN_SET内置函数，允许您在逗号分隔的字符串列表中查找指定字符串的位置。
-例子：
-```
-mysql> SELECT FIND_IN_SET('y','x,y,z');
-+--------------------------+
-| FIND_IN_SET('y','x,y,z') |
-+--------------------------+
-|                        2 |
-+--------------------------+
-1 row in set
-```
-如没有查询到则返回0
-
-如需验证特定版本的支持，可直接查阅 MySQL 官方文档 或执行以下命令查询：
-
-```sql
-SHOW FUNCTION STATUS LIKE 'FIND_IN_SET';
-```
-
----
-
-17. change password
+16. change password
 ```sql
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'your_new_password';
 ```

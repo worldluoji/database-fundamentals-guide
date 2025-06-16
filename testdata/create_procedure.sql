@@ -1,5 +1,5 @@
 CREATE TABLE `t2` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL COMMENT '测试ID',
   `a` int(11) DEFAULT NULL,
   `b` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),

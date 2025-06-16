@@ -126,7 +126,7 @@ select ... from geek where c=N order by b
 ```
 这条sql如果只有c单个字段的索引，定位记录可以走索引，但是order by b的顺序与主键顺序不一致，需要额外排序
 
-cb索引可以把排序优化调
+cb索引可以把排序优化掉
 
 --- 
 

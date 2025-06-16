@@ -1,7 +1,7 @@
 # orderby
 ## orderby 是怎么工作的
 一个例子说明：
-```
+```sql
 CREATE TABLE `t` (
   `id` int(11) NOT NULL,
   `city` varchar(16) NOT NULL,
@@ -13,9 +13,28 @@ CREATE TABLE `t` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
 name是人的姓名，只为city加了索引，目的是为了加快查询速度
-```
+```sql
 select city,name,age from t where city='杭州' order by name limit 1000;
 ```
+
+explain分析结果如下：
+```
+MySQL [test]> explain select city,name,age from t where city='杭州' order by name limit 1000 \G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: t
+   partitions: NULL
+         type: ref
+possible_keys: city
+          key: city
+      key_len: 50
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: Using index condition; Using filesort
+```
+
 处理流程如下：
 
 <img src="./orderby全字段排序.jpg" />
@@ -28,15 +47,34 @@ select city,name,age from t where city='杭州' order by name limit 1000;
 回行查到其它字段，比如这里的age。
 
 解决方法：加入（city,name）联合索引 
-```
+```sql
 alter table t add index city_user(city, name);
 ```
-这样，where city='杭州'后查询出的数据就是天然按name排序的，就不再需要sort buffer了，直接从主键索引id中取到city,name,age到1000行即可
+这样，where city='杭州'后查询出的数据就是天然按name排序的，就不再需要sort buffer了，直接从主键索引id中取到city,name,age到1000行即可。
+
+这时explain结果如下：
+```
+MySQL [test]> explain select city,name,age from t where city='杭州' order by name limit 1000 \G
+*************************** 1. row ***************************
+           id: 1
+  select_type: SIMPLE
+        table: t
+   partitions: NULL
+         type: ref
+possible_keys: city_user
+          key: city_user
+      key_len: 50
+          ref: const
+         rows: 1
+     filtered: 100.00
+        Extra: Using index condition
+```
+已经全部走索引。
  
-<br>
+---
 
 ## order by 示例
-```
+```sql
 select sh.question_id as survey_log from 
 (select question_id, count(*) as show_cnt from SurveyLog
 where action = "show"

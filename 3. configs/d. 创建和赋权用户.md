@@ -2,14 +2,14 @@
 
 ### 创建新用户
 
-1. **登录到 MariaDB**:
-   使用具有足够权限（如 root 用户）的账户登录到 MariaDB：
+1. **登录到 MySQL**:
+   使用具有足够权限（如 root 用户）的账户登录到 MySQL：
    ```bash
    mysql -u root -p
    ```
 
 2. **创建新用户**:
-   在 MariaDB shell 中，使用 `CREATE USER` 语句来创建一个新用户。你可以指定用户名和主机名（通常为 `'localhost'` 或 `%` 表示所有主机），以及密码。
+   在 MySQL shell 中，使用 `CREATE USER` 语句来创建一个新用户。你可以指定用户名和主机名（通常为 `'localhost'` 或 `%` 表示所有主机），以及密码。
    
    ```sql
    CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';

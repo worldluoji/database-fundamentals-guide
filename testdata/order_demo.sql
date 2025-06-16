@@ -4,7 +4,7 @@ create table ORDER_DMEO (
 	receiver varchar(24),
 	sender varchar(24)
 ) ENGINE=InnoDB CHARSET=utf8mb4;
-alter table ORDER_DMEO add index order_no_index(order_no)
+alter table ORDER_DMEO add index order_no_index(order_no);
 
 drop procedure idata;
 delimiter ;;

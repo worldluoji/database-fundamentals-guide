@@ -7,7 +7,7 @@ CREATE TABLE employees (
     name VARCHAR(50) COMMENT '员工姓名',
     department VARCHAR(50) COMMENT '所属部门',
     salary DECIMAL(10,2) COMMENT '薪资'
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8  COMMENT='员工信息表';
+) ENGINE=InnoDB CHARSET=utf8mb4  COMMENT='员工信息表';
 
 -- 插入测试数据
 INSERT INTO employees VALUES 

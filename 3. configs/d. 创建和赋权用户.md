@@ -19,6 +19,11 @@
    CREATE USER 'newuser'@'%' IDENTIFIED BY 'password';
    ```
 
+   后续还可以修改密码：
+   ```
+   ALTER USER 'root'@'localhost' IDENTIFIED BY 'your_new_password';
+   ```
+
 ### 赋予用户权限
 
 3. **授予权限**:

@@ -1,5 +1,5 @@
 # alter table注意事项
-为 MySQL 数据表添加字段（`ALTER TABLE xxx ADD COLUMN yyy`）确实存在一定的风险，尤其是在生产环境中操作时。以下是可能的风险和注意事项：
+为 MySQL 数据表添加字段（例如`ALTER TABLE studentt ADD age INT(4); `）确实存在一定的风险，尤其是在生产环境中操作时。以下是可能的风险和注意事项：
 
 ---
 

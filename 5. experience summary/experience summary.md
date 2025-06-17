@@ -84,35 +84,71 @@ InnoDB count(*)性能优化：
 - MySQL 中 count 字段不统计 null 值，COUNT(*) 才是统计所有记录数量的正确方式。
 - MySQL 中 =NULL 并不是判断条件而是赋值，对 NULL 进行判断只能使用 IS NULL 或者 IS NOT NULL。
 
----
+example1:
+```
+MySQL [test]> select * from users;
++----+-----------+--------------------------+
+| id | name      | email                    |
++----+-----------+--------------------------+
+|  1 | 张三      | zhangsan_new@example.com |
+|  4 | 赵六      | zhaoliu_new@example.com  |
+|  6 | 王麻子    | NULL                     |
++----+-----------+--------------------------+
+3 rows in set (0.002 sec)
 
-12.  表数据量大，增加字段很慢的解决办法
-新建一张表，将原表的数据全部插入，将新表重命名。
+MySQL [test]> select count(*) from users;
++----------+
+| count(*) |
++----------+
+|        3 |
++----------+
+1 row in set (0.002 sec)
 
----
+MySQL [test]> select count(email) from users;
++--------------+
+| count(email) |
++--------------+
+|            2 |
++--------------+
+1 row in set (0.002 sec)
+```
 
-13.  其它常用语句
-增加一个age字段，类型是INT(4)
-```sql
-ALTER TABLE student ADD age INT(4); 
+example2:
+```
+MySQL [test]> select * from employees;
++----+--------+------------+----------+
+| id | name   | department | salary   |
++----+--------+------------+----------+
+|  1 | 张三   | 技术部     | 15000.00 |
+|  2 | 李四   | 技术部     | 18000.00 |
+|  3 | 王五   | 技术部     | 17000.00 |
+|  4 | 赵六   | 市场部     | 12000.00 |
+|  5 | 钱七   | 市场部     | 13000.00 |
+|  6 | 孙八   | 人事部     | 10000.00 |
+|  7 | 周九   | 人事部     |     NULL |
++----+--------+------------+----------+
+7 rows in set (0.002 sec)
+
+MySQL [test]> select sum(IFNULL(salary,0)) from employees;
++-----------------------+
+| sum(IFNULL(salary,0)) |
++-----------------------+
+|              85000.00 |
++-----------------------+
+1 row in set (0.002 sec)
+
+MySQL [test]> select sum(salary) from employees;
++-------------+
+| sum(salary) |
++-------------+
+|    85000.00 |
++-------------+
+1 row in set (0.002 sec)
 ```
 
 ---
 
-14.  导出全部数据库
+12.  导出全部数据库
 ```shell
 mysqldump -uroot -p --all-databases > sqlfile.sql
-```
-
----
-
-15.   关于外键约束
-在Mysql数据库中，有时会用到外键约束FOREIGN KEY。这些外键约束也可以使用触发器TRIGGER来实现。当然，外键约束和触发器都是不提倡使用的。
-因为外键约束和触发器容易给数据库服务器增加额外的负担，造成性能下降。甚至可能造成频发的锁等待或者死锁。
-
----
-
-16. change password
-```sql
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'your_new_password';
 ```

@@ -18,6 +18,7 @@ insert into student(STU_NUM, GRADE, CLASS) values(10005, 'gradeA', 'classB');
 insert into student(STU_NUM, GRADE, CLASS) values(10006, 'gradeA', 'classB');
 insert into student(STU_NUM, GRADE, CLASS) values(10007, 'gradeA', 'classB');
 insert into student(STU_NUM, GRADE, CLASS) values(10007, 'gradeB', 'classA');
+insert into student(STU_NUM, GRADE, CLASS) values(10009, 'gradeB', NULL);
 ```
 
 group by的常规用法是配合聚合函数，利用分组信息进行统计，常见的是配合max等聚合函数筛选数据后分析，以及配合having进行筛选后过滤。
@@ -26,12 +27,13 @@ select min(stu_num),class from student group by class;
 +--------------+--------+
 | min(stu_num) | class  |
 +--------------+--------+
+|        10009 | NULL   |
 |        10001 | classA |
-|        10003 | classC |
 |        10005 | classB |
+|        10003 | classC |
 +--------------+--------+
 ```
-即查询每种class中学号最小的那个，分类输出。
+即查询每种class中学号最小的那个，分类输出。NULL会被归到一个分类，升序时在第一个。
 
 使用having则可以加入过滤条件
 ```

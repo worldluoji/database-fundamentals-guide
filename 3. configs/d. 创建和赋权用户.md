@@ -79,6 +79,13 @@
    SHOW GRANTS FOR 'newuser'@'localhost';
    ```
 
+### 查看用户列表
+```sql
+SELECT * FROM mysql.user;
+```
+
+---
+
 ### 注意事项
 
 - **安全提示**: 不要轻易给予 `ALL PRIVILEGES`，只赋予用户完成工作所需的最小权限。
